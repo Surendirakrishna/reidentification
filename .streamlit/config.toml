@@ -1,0 +1,11 @@
+[server]
+headless = true
+maxUploadSize = 50
+fileWatcherType = "none"   # avoid watching large Output/ folders and torch internals
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#38b5ff"

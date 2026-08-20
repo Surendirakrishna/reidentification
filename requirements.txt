@@ -1,0 +1,22 @@
+# Multi-Camera Person Re-ID (YOLO + OC-SORT + OSNet + Streamlit)
+# Tested on Windows 11 / Python 3.12 with torch 2.13.0+cu130, ultralytics 8.4.122, boxmot 22.0.0,
+# opencv-python 4.14, numpy 2.5, pandas 2.3, streamlit 1.61.
+#
+# GPU users: install the CUDA build of torch/torchvision FIRST (see README "Installation"), e.g.
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+# then `pip install -r requirements.txt` (pip keeps the already installed CUDA torch).
+
+torch>=2.6,<3.0
+torchvision>=0.21,<1.0
+ultralytics>=8.4.58,<9.0        # YOLO11/YOLOv8 person detector (auto-downloads weights)
+boxmot==22.0.0                  # OC-SORT tracker + OSNet (torchreid) Re-ID backbone & weight download
+opencv-python>=4.10,<5.0        # video I/O, drawing (boxmot requires < 5.0)
+numpy>=2.2,<3.0
+pandas>=2.2,<3.0                # reports / dashboard tables (boxmot requires < 3.0)
+pyyaml>=6.0                     # config.yaml
+streamlit>=1.50,<2.0            # UI (fragments with run_every, width="stretch" API)
+altair>=5.0                     # track timeline chart
+imageio-ffmpeg>=0.6.0           # bundled ffmpeg -> H.264 output videos that play in the browser
+pytest>=8.0                     # tests
+
+# Pulled in automatically by boxmot: lapx, filterpy, gdown, scikit-learn, timm, huggingface-hub, rich, click

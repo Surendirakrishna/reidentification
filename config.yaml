@@ -1,0 +1,74 @@
+# Multi-Camera Person Re-ID configuration.
+# Every value can be overridden in the Streamlit sidebar or with run_pipeline.py flags.
+
+input:
+  directory: "Input Data"
+  extensions: [".mp4", ".avi", ".mkv", ".mov"]
+  # Optional wall-clock start time per camera id (file stem). Used for the timeline only.
+  # camera_start_times:
+  #   cam1: "10:02:11"
+  #   cam2: "10:02:11"
+  camera_start_times: {}
+
+output:
+  directory: "Output"
+  save_crops: false          # representative crops only (Output/crops/P001/cam1/...)
+  save_embeddings: true      # Output/embeddings/embeddings.npz
+  save_videos: true          # Output/processed/<camera>_reid.mp4
+  video_codec: "auto"        # auto -> h264_nvenc / libx264 via ffmpeg, fallback OpenCV mp4v
+  video_scale: 1.0           # scale factor of the annotated videos (0.5 = half size)
+  preview_every_n_frames: 15
+
+detector:
+  model: "yolo11n.pt"        # any Ultralytics YOLO detection checkpoint (auto-downloaded into models/)
+  confidence: 0.40
+  iou: 0.50
+  device: "auto"             # auto | cpu | cuda:0
+  imgsz: 1280                # 640 is fastest; 960/1280 recover small, distant people (1080p footage)
+  half: "auto"               # FP16 on CUDA
+  classes: ["person"]
+  models_dir: "models"
+
+tracker:
+  type: "ocsort"
+  det_thresh: 0.30           # OC-SORT high-confidence threshold
+  max_age: 30                # frames a lost track is kept alive
+  min_hits: 3                # consecutive hits before a track is confirmed
+  iou_threshold: 0.30
+  delta_t: 3
+  inertia: 0.2
+  asso_func: "iou"           # iou | giou | ciou | diou | centroid
+  use_byte: false
+
+reid:
+  model: "osnet_x1_0_msmt17.pt"   # OSNet weights (auto-downloaded into models/), e.g. osnet_ain_x1_0_msmt17.pt
+  device: "auto"
+  half: "auto"
+  # Cosine similarity needed to reuse an existing Global ID. Model- and scene-dependent:
+  # calibrate on your own footage (see README). 0.65 is a common starting point for OSNet;
+  # on the crowded sample footage 0.70 produced far fewer impossible same-camera matches.
+  similarity_threshold: 0.70
+  uncertain_margin: 0.08          # [threshold - margin, threshold) -> new ID flagged UNCERTAIN
+  embedding_interval: 10          # processed frames between OSNet embeddings of the same track
+  max_embeddings_per_identity: 20 # gallery size per Global ID
+  max_embeddings_per_track: 5     # gallery samples one track may contribute
+  batch_size: 16
+  matching_strategy: "top_k_tracks"  # max | mean | top_k | top_k_tracks (robust two-level top-k)
+  top_k: 3
+  min_crop_width: 32
+  min_crop_height: 64
+  min_crop_area: 2048
+  min_sharpness: 0.0              # Laplacian variance threshold; 0 disables the blur filter
+  max_pending_embeddings: 3       # embeddings collected before a NEW/UNCERTAIN decision is final
+  models_dir: "models"
+
+tracking:
+  min_track_frames: 10       # shorter tracks never get a Global ID (status SHORT)
+
+performance:
+  frame_skip: 0              # 0 = every frame, 1 = every 2nd frame, ...
+  detection_interval: 1      # run YOLO + tracker every N processed frames
+  max_frames: 0              # 0 = whole video (per camera)
+  start_frame: 0
+  mode: "sequential"         # sequential | parallel
+  parallel_workers: 2
